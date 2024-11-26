@@ -1,17 +1,18 @@
 import { Request, Response } from 'express';
 import yahooFinance from 'yahoo-finance2';
+import { formatDate } from '../../util';
 
 export default class Stock {
     getStock = async (req: Request, res: Response) => {
         const { symbol } = req.query;
 
         try {
-            const stockData = await yahooFinance.quote(symbol + '.SA');
-            const stockRating = stockData.averageAnalystRating
-                ? stockData.averageAnalystRating.split(' - ')[0]
-                : 'Rating não disponível';
+            const stockData: any = await yahooFinance.quote(symbol + '.SA');
 
-            return res.json({ symbol, rating: stockRating });
+            return res.json({ 
+                stock: stockData, 
+                averageAnalystRating: Number(stockData.averageAnalystRating.split(' - ')[0]),
+            });
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar dados da ação.' });
         }
@@ -20,14 +21,26 @@ export default class Stock {
     getStockValuesList = async (req: Request, res: Response) => {
         const { symbol } = req.query;
 
+        const monthyContribution = 1000;
+
         try {
-            const stockData = await yahooFinance.recommendation(symbol + '.SA', {
-                period1: new Date(new Date().setMonth(new Date().getMonth() - 6)),
-                period2: new Date(),
+            const stockData: any = await yahooFinance.chart(symbol + '.SA', {
+                period1: new Date('2024-01-01').getTime() / 1000,
+                period2: new Date('2024-11-01').getTime() / 1000,
                 interval: '1mo',
             });
 
-            return res.json({ stockData });
+            return res.json({ 
+                quotes: stockData.quotes.map((quote: any) => ({
+                    quote: (quote.open + quote.close) / 2,
+                    date: formatDate(quote.date),
+                    ordenedStocks: monthyContribution / ((quote.open + quote.close) / 2),
+                })), 
+                dividends: stockData.events.dividends.map((dividend: any) => ({
+                    amount: dividend.amount,
+                    date: formatDate(dividend.date),
+                })), 
+            });
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar dados da ação.' });
         }
