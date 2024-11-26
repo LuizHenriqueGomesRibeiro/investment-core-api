@@ -30,16 +30,21 @@ export default class Stock {
                 interval: '1mo',
             });
 
+            let carryOver = 0;
+
             return res.json({ 
-                quotes: stockData.quotes.map((quote: any) => ({
-                    quote: (quote.open + quote.close) / 2,
-                    date: formatDate(quote.date),
-                    ordenedStocks: monthyContribution / ((quote.open + quote.close) / 2),
-                })), 
-                dividends: stockData.events.dividends.map((dividend: any) => ({
-                    amount: dividend.amount,
-                    date: formatDate(dividend.date),
-                })), 
+                quotes: stockData.quotes.map((quote: any, index: number) => {
+                    const averageQuote = (quote.open + quote.close) / 2;
+                    const ordenedStocksWithCarry = (monthyContribution / averageQuote) + carryOver;
+                    const integerPart = Math.floor(ordenedStocksWithCarry);
+                    carryOver = ordenedStocksWithCarry - integerPart;
+                
+                    return {
+                        quote: averageQuote,
+                        date: formatDate(quote.date),
+                        ordenedStocks: integerPart,
+                    };
+                }), 
             });
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar dados da ação.' });
