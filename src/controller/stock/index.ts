@@ -31,11 +31,6 @@ export default class Stock {
             });
 
             let carryOver = 0;
-            let totalStocks = 0;
-            let nextContribution = 1000;
-            const dividendEvents = new Map(
-                stockData.dividends.map((dividend: any) => [dividend.date, dividend.amount])
-            );
 
             return res.json({ 
                 quotes: stockData.quotes.map((quote: any) => {
