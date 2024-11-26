@@ -3,7 +3,7 @@ const yahooFinance = require('yahoo-finance2').default;
 
 const app = express();
 
-app.get('/:symbol', async (req, res) => {
+app.get('/stock/:symbol', async (req, res) => {
     const { symbol } = req.params;
 
     try {
