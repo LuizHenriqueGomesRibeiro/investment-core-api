@@ -39,7 +39,24 @@ export default class Stock {
             let carryOver = 0;
             let cumulativeStocks = 0;
 
+            const dividends = stockData.events.dividends.map((dividend: any) => ({
+                amount: dividend.amount,
+                date: formatDate(dividend.date),
+            }));
+
             const quotes = stockData.quotes.map((quote: any) => {
+                let date = formatDate(quote.date);
+                let dividendPayment = dividends.reduce((sum: any, dividend: any) => {
+                    const [dividendDay, dividendMonth, dividendYear] = dividend.date.split('/').map(Number);
+                    const [day, month, year] = date.split('/').map(Number);
+                  
+                    if (dividendMonth === month && dividendYear === year) {
+                        return sum + dividend.amount
+                    }
+                  
+                    return sum;
+                }, 0);
+
                 const averageQuote = (quote.open + quote.close) / 2;
                 const rawStocks = (monthyContribution / averageQuote) + carryOver;
                 const integerPart = Math.floor(rawStocks);
@@ -49,18 +66,16 @@ export default class Stock {
 
                 return {
                     quote: averageQuote,
-                    date: formatDate(quote.date),
+                    date: date,
                     withoutDividendOrdenedStocks: integerPart,
                     totalStocks: cumulativeStocks,
+                    dividendPayment: dividendPayment * cumulativeStocks,
                 };
             });
 
             return res.json({ 
                 quotes: quotes,
-                dividends: stockData.events.dividends.map((dividend: any) => ({
-                    amount: dividend.amount,
-                    date: formatDate(dividend.date),
-                })),
+                dividends: dividends,
             });
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar dados da ação.' });
