@@ -6,7 +6,8 @@ interface GetStockValuesListQuery {
     symbol: string,
     start: string,
     end: string,
-    reinvestDividend: boolean,
+    reinvestDividend: string,
+    monthyContribution: number,
 }
 
 export default class Stock {
@@ -26,9 +27,9 @@ export default class Stock {
     }
 
     getStockValuesList = async (req: Request, res: Response) => {
-        const { symbol, start, end, reinvestDividend } = req.query as unknown as GetStockValuesListQuery;
-
-        const monthyContribution = 1000;
+        const { symbol, start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
+        const isReinvestDividend = reinvestDividend === 'true';
+        const monthyContributionNumbered = Number(monthyContribution);
 
         try {
             const stockData: any = await yahooFinance.chart(symbol + '.SA', {
@@ -45,7 +46,7 @@ export default class Stock {
             let carryOver = 0;
             let cumulativeStocksWithDividend = 0;
             let cumulativeStocksWithoutDividend = 0;
-            let adjustedContribution = monthyContribution;
+            let adjustedContribution = monthyContributionNumbered;
 
             const quotes = stockData.quotes.map((quote: any) => {
                 let date = formatDate(quote.date);
@@ -63,7 +64,7 @@ export default class Stock {
 
                 const averageQuote = (quote.open + quote.close) / 2;
 
-                const rawStocksWithoutDividend = monthyContribution / averageQuote + carryOver;
+                const rawStocksWithoutDividend = monthyContributionNumbered / averageQuote + carryOver;
                 const integerPartWithoutDividend = Math.floor(rawStocksWithoutDividend);
 
                 const rawStocksWithDividend = adjustedContribution / averageQuote + carryOver;
@@ -74,23 +75,26 @@ export default class Stock {
                 cumulativeStocksWithDividend += integerPartWithDividend;
 
                 const contributionWithDividend = adjustedContribution;
-                const contributionWithoutDividend = monthyContribution;
-                adjustedContribution = monthyContribution + dividendPayment * cumulativeStocksWithDividend;
+                const contributionWithoutDividend = monthyContributionNumbered;
+                adjustedContribution = monthyContributionNumbered + dividendPayment * cumulativeStocksWithDividend;
 
-                return {
+                return isReinvestDividend ? {
                     quote: averageQuote,
                     date: date,
-                    withDividendProperty: cumulativeStocksWithDividend * averageQuote,
-                    withDividendContribution: contributionWithDividend,
-                    withDividendOrdenedStocks: integerPartWithDividend,
-                    withDividendTotalStocks: cumulativeStocksWithDividend,
-                    withDividendPayment: dividendPayment * cumulativeStocksWithDividend,
-                    withoutDividendProperty: cumulativeStocksWithoutDividend * averageQuote,
-                    withoutDividendContribution: contributionWithoutDividend,
-                    withoutDividendOrdenedStocks: integerPartWithoutDividend,
-                    withoutDividendTotalStocks: cumulativeStocksWithoutDividend,
-                    withoutDividendPayment: dividendPayment * cumulativeStocksWithoutDividend,
-                };
+                    property: cumulativeStocksWithDividend * averageQuote,
+                    contribution: contributionWithDividend,
+                    ordenedStocks: integerPartWithDividend,
+                    totalStocks: cumulativeStocksWithDividend,
+                    payment: dividendPayment * cumulativeStocksWithDividend,
+                } : {
+                    quote: averageQuote,
+                    date: date,
+                    property: cumulativeStocksWithoutDividend * averageQuote,
+                    contribution: contributionWithoutDividend,
+                    ordenedStocks: integerPartWithoutDividend,
+                    totalStocks: cumulativeStocksWithoutDividend,
+                    payment: dividendPayment * cumulativeStocksWithoutDividend,
+                }
             });
 
             const getYear = (date: string) => date.split('/')[2];
@@ -100,24 +104,17 @@ export default class Stock {
 
                 if (!acc[year]) {
                     acc[year] = {
-                        withDividendPayment: 0,
-                        withoutDividendPayment: 0,
+                        payment: 0,
                     };
                 }
 
-                acc[year].withDividendPayment += quote.withDividendPayment;
-                acc[year].withoutDividendPayment += quote.withoutDividendPayment;
+                acc[year].payment += quote.payment;
 
                 return acc;
             }, {});
 
             const totalWithDividendPayment = quotes.reduce(
-                (sum: number, quote: any) => sum + quote.withDividendPayment,
-                0
-            );
-
-            const totalWithoutDividendPayment = quotes.reduce(
-                (sum: number, quote: any) => sum + quote.withoutDividendPayment,
+                (sum: number, quote: any) => sum + quote.payment,
                 0
             );
 
@@ -127,7 +124,6 @@ export default class Stock {
                 results: {
                     totalPayment: {
                         withDividendPayment: totalWithDividendPayment,
-                        withoutDividendPayment: totalWithoutDividendPayment,
                     },
                     byYear: {
                         ...yearlyDividendPayments,
