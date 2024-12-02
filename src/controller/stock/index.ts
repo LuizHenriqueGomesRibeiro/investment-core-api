@@ -28,7 +28,6 @@ export default class Stock {
 
     getStockValuesList = async (req: Request, res: Response) => {
         const { symbol, start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
-        const isReinvestDividend = reinvestDividend === 'true';
         const monthyContributionNumbered = Number(monthyContribution);
 
         try {
@@ -78,7 +77,7 @@ export default class Stock {
                 const contributionWithoutDividend = monthyContributionNumbered;
                 adjustedContribution = monthyContributionNumbered + dividendPayment * cumulativeStocksWithDividend;
 
-                return isReinvestDividend ? {
+                return reinvestDividend ? {
                     quote: averageQuote,
                     date: date,
                     property: cumulativeStocksWithDividend * averageQuote,
@@ -113,7 +112,7 @@ export default class Stock {
                 return acc;
             }, {});
 
-            const totalWithDividendPayment = quotes.reduce(
+            const totalPayment = quotes.reduce(
                 (sum: number, quote: any) => sum + quote.payment,
                 0
             );
@@ -123,7 +122,7 @@ export default class Stock {
                 dividends: dividends,
                 results: {
                     totalPayment: {
-                        withDividendPayment: totalWithDividendPayment,
+                        payment: totalPayment,
                     },
                     byYear: {
                         ...yearlyDividendPayments,
