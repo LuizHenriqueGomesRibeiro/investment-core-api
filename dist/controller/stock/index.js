@@ -22,7 +22,6 @@ class Stock {
         };
         this.getStockValuesList = async (req, res) => {
             const { symbol, start, end, reinvestDividend, monthyContribution } = req.query;
-            const isReinvestDividend = reinvestDividend === 'true';
             const monthyContributionNumbered = Number(monthyContribution);
             try {
                 const stockData = await yahoo_finance2_1.default.chart(symbol + '.SA', {
@@ -59,7 +58,7 @@ class Stock {
                     const contributionWithDividend = adjustedContribution;
                     const contributionWithoutDividend = monthyContributionNumbered;
                     adjustedContribution = monthyContributionNumbered + dividendPayment * cumulativeStocksWithDividend;
-                    return isReinvestDividend ? {
+                    return reinvestDividend ? {
                         quote: averageQuote,
                         date: date,
                         property: cumulativeStocksWithDividend * averageQuote,
@@ -88,13 +87,13 @@ class Stock {
                     acc[year].payment += quote.payment;
                     return acc;
                 }, {});
-                const totalWithDividendPayment = quotes.reduce((sum, quote) => sum + quote.payment, 0);
+                const totalPayment = quotes.reduce((sum, quote) => sum + quote.payment, 0);
                 return res.json({
                     quotes: quotes,
                     dividends: dividends,
                     results: {
                         totalPayment: {
-                            withDividendPayment: totalWithDividendPayment,
+                            payment: totalPayment,
                         },
                         byYear: Object.assign({}, yearlyDividendPayments)
                     }
