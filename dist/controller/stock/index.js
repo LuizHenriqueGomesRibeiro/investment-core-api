@@ -37,6 +37,7 @@ class Stock {
                 let cumulativeStocksWithDividend = 0;
                 let cumulativeStocksWithoutDividend = 0;
                 let adjustedContribution = monthyContributionNumbered;
+                let cumulativePayment = 0;
                 const quotes = stockData.quotes.map((quote) => {
                     let date = (0, util_1.formatDate)(quote.date);
                     let dividendPayment = dividends.reduce((sum, dividend) => {
@@ -58,6 +59,8 @@ class Stock {
                     const contributionWithDividend = adjustedContribution;
                     const contributionWithoutDividend = monthyContributionNumbered;
                     adjustedContribution = monthyContributionNumbered + dividendPayment * cumulativeStocksWithDividend;
+                    const currentPayment = dividendPayment * (reinvestDividend ? cumulativeStocksWithDividend : cumulativeStocksWithoutDividend);
+                    cumulativePayment += currentPayment;
                     return reinvestDividend ? {
                         quote: averageQuote,
                         date: date,
@@ -66,6 +69,7 @@ class Stock {
                         ordenedStocks: integerPartWithDividend,
                         totalStocks: cumulativeStocksWithDividend,
                         payment: dividendPayment * cumulativeStocksWithDividend,
+                        cumulativePayment: cumulativePayment,
                     } : {
                         quote: averageQuote,
                         date: date,
@@ -74,6 +78,7 @@ class Stock {
                         ordenedStocks: integerPartWithoutDividend,
                         totalStocks: cumulativeStocksWithoutDividend,
                         payment: dividendPayment * cumulativeStocksWithoutDividend,
+                        cumulativePayment: cumulativePayment,
                     };
                 });
                 const getYear = (date) => date.split('/')[2];
@@ -87,6 +92,12 @@ class Stock {
                     acc[year].payment += quote.payment;
                     return acc;
                 }, {});
+                const transformYearlyDividendPayments = (yearlyDividendPayments) => {
+                    return Object.keys(yearlyDividendPayments).map(year => ({
+                        year: year,
+                        payment: yearlyDividendPayments[year].payment
+                    }));
+                };
                 const totalPayment = quotes.reduce((sum, quote) => sum + quote.payment, 0);
                 return res.json({
                     quotes: quotes,
@@ -95,7 +106,7 @@ class Stock {
                         totalPayment: {
                             payment: totalPayment,
                         },
-                        byYear: Object.assign({}, yearlyDividendPayments)
+                        byYear: transformYearlyDividendPayments(yearlyDividendPayments)
                     }
                 });
             }
