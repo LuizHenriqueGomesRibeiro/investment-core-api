@@ -118,6 +118,13 @@ export default class Stock {
                 return acc;
             }, {});
 
+            const transformYearlyDividendPayments = (yearlyDividendPayments: { [key: string]: { payment: number } }): { year: string, payment: number }[] => {
+                return Object.keys(yearlyDividendPayments).map(year => ({
+                    year: year,
+                    payment: yearlyDividendPayments[year].payment
+                }));
+            }
+
             const totalPayment = quotes.reduce(
                 (sum: number, quote: any) => sum + quote.payment,
                 0
@@ -130,9 +137,7 @@ export default class Stock {
                     totalPayment: {
                         payment: totalPayment,
                     },
-                    byYear: {
-                        ...yearlyDividendPayments,
-                    }
+                    byYear: transformYearlyDividendPayments(yearlyDividendPayments)
                 }
             });
         } catch (error) {
