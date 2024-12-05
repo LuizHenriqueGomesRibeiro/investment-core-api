@@ -47,6 +47,7 @@ export default class Stock {
             let cumulativeStocksWithoutDividend = 0;
             let adjustedContribution = monthyContributionNumbered;
             let cumulativePayment = 0; 
+            let cumulativeContribution = 0;
 
             const quotes = stockData.quotes.map((quote: any) => {
                 let date = formatDate(quote.date);
@@ -80,12 +81,14 @@ export default class Stock {
 
                 const currentPayment = dividendPayment * (reinvestDividend ? cumulativeStocksWithDividend : cumulativeStocksWithoutDividend);
                 cumulativePayment += currentPayment;
+                cumulativeContribution += contributionWithoutDividend;
 
-                return reinvestDividend ? {
+                return reinvestDividend === 'true' ? {
                     quote: averageQuote,
                     date: date,
                     property: cumulativeStocksWithDividend * averageQuote,
                     contribution: contributionWithDividend,
+                    comulativeContribution: cumulativeContribution,
                     ordenedStocks: integerPartWithDividend,
                     totalStocks: cumulativeStocksWithDividend,
                     payment: dividendPayment * cumulativeStocksWithDividend,
@@ -95,6 +98,7 @@ export default class Stock {
                     date: date,
                     property: cumulativeStocksWithoutDividend * averageQuote,
                     contribution: contributionWithoutDividend,
+                    comulativeContribution: cumulativeContribution,
                     ordenedStocks: integerPartWithoutDividend,
                     totalStocks: cumulativeStocksWithoutDividend,
                     payment: dividendPayment * cumulativeStocksWithoutDividend,
