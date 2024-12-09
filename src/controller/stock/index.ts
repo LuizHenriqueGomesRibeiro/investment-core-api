@@ -37,7 +37,7 @@ export default class Stock {
                 interval: '1mo',
             });
 
-            return res.json(stockData);
+            return res.json(stockData.quotes);
         } catch (error) {
             res.status(500).json({
                 error: 'error fetching request', message: error,
