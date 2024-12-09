@@ -21,6 +21,7 @@ export default class Stock {
                 stock: stockData, 
                 averageAnalystRating: Number(stockData.averageAnalystRating.split(' - ')[0]),
             });
+            
         } catch (error) {
             res.status(500).json({ error: 'Erro ao buscar dados da ação.' });
         }
