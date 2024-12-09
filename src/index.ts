@@ -7,6 +7,7 @@ const app = express();
 const stock: Stock = new Stock();
 
 app.use(cors());
+app.get('/stocks/list/', stock.getMultiplyStocks);
 app.get('/stock/list/', stock.getStockValuesList);
 
 app.listen(3000, () => {

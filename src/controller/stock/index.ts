@@ -26,6 +26,25 @@ export default class Stock {
         }
     }
 
+    getMultiplyStocks = async (req: Request, res: Response) => {
+        const { symbol, start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
+        const monthyContributionNumbered = Number(monthyContribution);
+
+        try {
+            const stockData: any = await yahooFinance.chart(symbol + '.SA', {
+                period1: new Date(start).getTime() / 1000,
+                period2: new Date(end).getTime() / 1000,
+                interval: '1mo',
+            });
+
+            return res.json(stockData);
+        } catch (error) {
+            res.status(500).json({
+                error: 'error fetching request', message: error,
+            });
+        }
+    }
+
     getStockValuesList = async (req: Request, res: Response) => {
         const { symbol, start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
         const monthyContributionNumbered = Number(monthyContribution);
