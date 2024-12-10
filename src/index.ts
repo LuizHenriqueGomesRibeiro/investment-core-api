@@ -10,6 +10,6 @@ app.use(cors());
 app.get('/stocks/list/', stock.getMultiplyStocks);
 app.get('/stock/list/', stock.getStockValuesList);
 
-app.listen(3000, () => {
-    console.log('Servidor rodando na porta 3000');
+app.listen(3001, () => {
+    console.log('Servidor rodando na porta 3001');
 });
