@@ -30,11 +30,6 @@ export default class Stock {
     getMultiplyStocks = async (req: Request, res: Response) => {
         const { start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
 
-        let monthyContributionNumbered = Number(monthyContribution);
-        let cumulativeMonthyContribution: number = 0;
-        let currentYear: number | null = null; 
-        let position: number = 0;
-
         const symbols = ['PETR4', 'BBAS3'];
 
         const response = await Promise.all(
@@ -45,6 +40,15 @@ export default class Stock {
                     interval: '1mo',
                 });
 
+                const quotes = stockData.quotes.map((quote: any) => {
+                    const currentQuote = (quote.open + quote.close) / 2;
+    
+                    return {
+                        quote: currentQuote,
+                        date: formatDate(quote.date, 'yyyy-mm-dd', true),
+                    }
+                });
+
                 const dividends = stockData.events.dividends.map((dividend: any) => ({
                     amount: dividend.amount,
                     date: formatDate(dividend.date, 'yyyy-mm-dd')
@@ -52,7 +56,7 @@ export default class Stock {
         
                 return {
                     [symbol]: {
-                        quotes: stockData.quotes,
+                        quotes: quotes,
                         dividends: dividends,
                     }
                 };
@@ -60,57 +64,6 @@ export default class Stock {
         );
 
         return res.json(response);
-
-        try {
-            const stockData: any = await yahooFinance.chart(symbols[0] + '.SA', {
-                period1: new Date(start).getTime() / 1000,
-                period2: new Date(end).getTime() / 1000,
-                interval: '1mo',
-            });
-
-            const quotes = stockData.quotes.map((quote: any) => {
-                const quoteDate = new Date(quote.date);
-                const quoteYear = quoteDate.getFullYear();
-
-                if (currentYear === null || quoteYear > currentYear) {
-                    if (currentYear !== null) {
-                        monthyContributionNumbered = monthyContributionNumbered * 1.1;
-                    }
-
-                    currentYear = quoteYear;
-                }
-
-                cumulativeMonthyContribution += monthyContributionNumbered;
-                const currentQuote = (quote.open + quote.close) / 2;
-                const ordenedStocks = monthyContribution / currentQuote;
-                position = position + ordenedStocks;
-
-                return {
-                    patrimony: position * currentQuote,
-                    quote: currentQuote,
-                    position: position,
-                    ordenedStocks: ordenedStocks,
-                    date: formatDate(quote.date, 'yyyy-mm-dd', true),
-                    monthyContribution: monthyContributionNumbered,
-                    cumulativeMonthyContribution: cumulativeMonthyContribution,
-                }
-            });
-
-            const dividends = stockData.events.dividends.map((dividend: any) => ({
-                amount: dividend.amount,
-                date: formatDate(dividend.date, 'yyyy-mm-dd')
-            }));
-
-            return res.json({ 
-                quotes: quotes,
-                dividends: dividends,
-            });
-            
-        } catch (error) {
-            res.status(500).json({
-                error: 'error fetching request', message: error,
-            });
-        }
     }
 
     getStockValuesList = async (req: Request, res: Response) => {
