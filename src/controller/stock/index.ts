@@ -35,7 +35,7 @@ export default class Stock {
         let currentYear: number | null = null; 
         let position: number = 0;
 
-        const symbols = ['PETR4'];
+        const symbols = ['PETR4', 'BBAS3'];
         
         try {
             const stockData: any = await yahooFinance.chart(symbols[0] + '.SA', {
