@@ -36,7 +36,31 @@ export default class Stock {
         let position: number = 0;
 
         const symbols = ['PETR4', 'BBAS3'];
+
+        const response = await Promise.all(
+            symbols.map(async (symbol: any) => {
+                const stockData: any = await yahooFinance.chart(symbol + '.SA', {
+                    period1: new Date(start).getTime() / 1000,
+                    period2: new Date(end).getTime() / 1000,
+                    interval: '1mo',
+                });
+
+                const dividends = stockData.events.dividends.map((dividend: any) => ({
+                    amount: dividend.amount,
+                    date: formatDate(dividend.date, 'yyyy-mm-dd')
+                }));
         
+                return {
+                    [symbol]: {
+                        quotes: stockData.quotes,
+                        dividends: dividends,
+                    }
+                };
+            })
+        );
+
+        return res.json(response);
+
         try {
             const stockData: any = await yahooFinance.chart(symbols[0] + '.SA', {
                 period1: new Date(start).getTime() / 1000,
