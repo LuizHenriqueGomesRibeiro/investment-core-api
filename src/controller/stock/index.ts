@@ -62,20 +62,14 @@ export default class Stock {
             })
         );
 
-        const dividends = response.map((stock: any) => stock.dividends);
-
-        function transformAndSortData(data: any) {
-            const mergedData = data.flat();
-        
-            const sortedData = mergedData.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
-            return sortedData;
-        }
-
-        return res.json(transformAndSortData(dividends));
+        const dividends = response
+            .map((stock: any) => stock.dividends)
+            .flat()
+            .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         return res.json({
             quotes: unifyStocksData(response),
+            dividends: dividends,
         });
     }
 
