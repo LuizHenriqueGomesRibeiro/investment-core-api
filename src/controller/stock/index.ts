@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import yahooFinance from 'yahoo-finance2';
-import { formatDate } from '../../util';
+import { formatDate, unifyStocksData } from '../../util';
 
 interface GetStockValuesListQuery {
     symbol: string,
@@ -55,15 +55,28 @@ export default class Stock {
                 }));
         
                 return {
-                    [symbol]: {
-                        quotes: quotes,
-                        dividends: dividends,
-                    }
+                    stock: symbol,
+                    quotes: quotes,
+                    dividends: dividends,
                 };
             })
         );
 
-        return res.json(response);
+        const dividends = response.map((stock: any) => stock.dividends);
+
+        function transformAndSortData(data: any) {
+            const mergedData = data.flat();
+        
+            const sortedData = mergedData.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+            return sortedData;
+        }
+
+        return res.json(transformAndSortData(dividends));
+
+        return res.json({
+            quotes: unifyStocksData(response),
+        });
     }
 
     getStockValuesList = async (req: Request, res: Response) => {
