@@ -57,14 +57,14 @@ export default class Stock {
                 }
 
                 cumulativeMonthyContribution += monthyContributionNumbered;
-                quote = (quote.open + quote.close) / 2;
-                
-                let ordenedStocks = monthyContributionNumbered / quote;
-                
+                const currentQuote = (quote.open + quote.close) / 2;
+                const ordenedStocks = monthyContribution / currentQuote;
                 position = position + ordenedStocks;
 
                 return {
-                    quote: quote,
+                    patrimony: position * currentQuote,
+                    quote: currentQuote,
+                    position: position,
                     ordenedStocks: ordenedStocks,
                     date: formatDate(quote.date, 'yyyy-mm-dd', true),
                     monthyContribution: monthyContributionNumbered,
