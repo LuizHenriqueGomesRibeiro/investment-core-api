@@ -32,6 +32,8 @@ export default class Stock {
 
         let monthyContributionNumbered = Number(monthyContribution);
         let cumulativeMonthyContribution: number = 0;
+        let currentYear: number | null = null; 
+        let position: number = 0;
 
         const symbols = ['PETR4'];
         
@@ -43,11 +45,27 @@ export default class Stock {
             });
 
             const quotes = stockData.quotes.map((quote: any) => {
-                monthyContributionNumbered = monthyContributionNumbered * 1.005;
+                const quoteDate = new Date(quote.date);
+                const quoteYear = quoteDate.getFullYear();
+
+                if (currentYear === null || quoteYear > currentYear) {
+                    if (currentYear !== null) {
+                        monthyContributionNumbered = monthyContributionNumbered * 1.1;
+                    }
+
+                    currentYear = quoteYear;
+                }
+
                 cumulativeMonthyContribution += monthyContributionNumbered;
+                quote = (quote.open + quote.close) / 2;
+                
+                let ordenedStocks = monthyContributionNumbered / quote;
+                
+                position = position + ordenedStocks;
 
                 return {
-                    quote: (quote.open + quote.close) / 2,
+                    quote: quote,
+                    ordenedStocks: ordenedStocks,
                     date: formatDate(quote.date, 'yyyy-mm-dd', true),
                     monthyContribution: monthyContributionNumbered,
                     cumulativeMonthyContribution: cumulativeMonthyContribution,
@@ -59,7 +77,10 @@ export default class Stock {
                 date: formatDate(dividend.date, 'yyyy-mm-dd')
             }));
 
-            return res.json(quotes);
+            return res.json({ 
+                quotes: quotes,
+                dividends: dividends,
+            });
             
         } catch (error) {
             res.status(500).json({
