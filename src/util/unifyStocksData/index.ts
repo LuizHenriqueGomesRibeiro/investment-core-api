@@ -3,8 +3,10 @@ const unifyStocksData = (data: any) => {
 
     for (let stockData of data) {
         const stock = stockData.stock;
+
         stockData.quotes.forEach((quote: any) => {
             let existingEntry = result.find(item => item.date === quote.date);
+
             if (existingEntry) {
                 existingEntry.quote[stock] = quote.quote;
             } else {
@@ -12,12 +14,15 @@ const unifyStocksData = (data: any) => {
                     date: quote.date,
                     quote: {
                         [stock]: quote.quote
+                    },
+                    ordenedStocks: {
+                        [stock]: quote.ordenedStocks
                     }
                 });
             }
         });
     }
-    
+
     return result;
 }
 

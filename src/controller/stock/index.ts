@@ -29,6 +29,8 @@ export default class Stock {
 
     getMultiplyStocks = async (req: Request, res: Response) => {
         const { start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
+        let monthyContributionNumbered = Number(monthyContribution);
+        let cumulativeContribution: number = 0;
 
         const symbols = ['PETR4', 'BBAS3'];
 
@@ -40,10 +42,24 @@ export default class Stock {
                     interval: '1mo',
                 });
 
+                let currentYear = new Date(start).getFullYear();
+
                 const quotes = stockData.quotes.map((quote: any) => {
+                    const quoteDate = new Date(quote.date);
+                    const quoteYear = quoteDate.getFullYear();
                     const currentQuote = (quote.open + quote.close) / 2;
+
+                    if (quoteYear > currentYear) {
+                        monthyContributionNumbered = monthyContributionNumbered * 1.10;
+                        currentYear = quoteYear;
+                    }
+                    
+                    cumulativeContribution = cumulativeContribution + monthyContributionNumbered;
     
                     return {
+                        monthyContribution: monthyContributionNumbered,
+                        cumulativeContribution: cumulativeContribution,
+                        ordenedStocks: monthyContributionNumbered / (2 * currentQuote),
                         quote: currentQuote,
                         date: formatDate(quote.date, 'yyyy-mm-dd', true),
                     }
@@ -66,7 +82,7 @@ export default class Stock {
             .map((stock: any) => stock.dividends)
             .flat()
             .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
+            
         return res.json({
             quotes: unifyStocksData(response),
             dividends: dividends,
