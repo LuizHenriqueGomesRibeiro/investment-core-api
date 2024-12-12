@@ -4,7 +4,7 @@ const unifyStocksData = (data: any) => {
 
     data.forEach((stockData: any) => {
         const stockName = stockData.stock;
-
+    
         stockData.quotes.forEach((quote: any) => {
             const { 
                 date, 
@@ -15,7 +15,7 @@ const unifyStocksData = (data: any) => {
                 ordenedStocks, 
                 patrimony
             } = quote;
-
+    
             if (!dateMap[date]) {
                 dateMap[date] = { 
                     date: date, 
@@ -25,7 +25,7 @@ const unifyStocksData = (data: any) => {
                     stocks: [],
                 };
             }
-
+    
             dateMap[date].stocks.push({
                 name: stockName,
                 quote: stockQuote,
@@ -33,13 +33,15 @@ const unifyStocksData = (data: any) => {
                 cumulativePosition,
                 patrimony
             });
+    
+            dateMap[date].totalPatrimony += patrimony;
         });
     });
-
+    
     Object.values(dateMap)
         .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .forEach(entry => result.push(entry));
-
+    
     return result;
 }
 
