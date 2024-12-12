@@ -21,7 +21,7 @@ const unifyStocksData = (data: any) => {
                     date: date, 
                     monthyContribution: monthyContribution, 
                     cumulativeContribution: cumulativeContribution,
-                    totalPatrimony: 0,
+                    patrimony: 0,
                     stocks: [],
                 };
             }
@@ -34,7 +34,7 @@ const unifyStocksData = (data: any) => {
                 patrimony
             });
     
-            dateMap[date].totalPatrimony += patrimony;
+            dateMap[date].patrimony += patrimony;
         });
     });
     

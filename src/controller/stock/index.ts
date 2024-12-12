@@ -31,7 +31,7 @@ export default class Stock {
         const { start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
         let monthyContributionNumbered = Number(monthyContribution);
 
-        const symbols = ['BBAS3', 'TAEE11', 'PETR4', 'VALE3'];
+        const symbols = ['PETR4', 'TAEE11'];
         const firstDate = new Date(start);
         const finalDate = new Date(end);
 
@@ -45,13 +45,16 @@ export default class Stock {
 
                 let cumulativeContributionForSymbol: number = 0;
                 let cumulativePosition: number = 0;
+                let remainder: number = 0;
 
                 const quotes = stockData.quotes.map((quote: any) => {
                     const currentQuote = (quote.open + quote.close) / 2;
-                    const ordenedStocks = monthyContributionNumbered / (symbols.length * currentQuote);
+                    let adjustedContribution = (monthyContributionNumbered / symbols.length) + remainder;
+                    const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
 
+                    remainder = adjustedContribution - ordenedStocks * currentQuote;
                     cumulativeContributionForSymbol += monthyContributionNumbered;
-                    cumulativePosition = cumulativePosition + ordenedStocks;
+                    cumulativePosition += ordenedStocks;
     
                     return {
                         patrimony: cumulativePosition * currentQuote,
@@ -61,7 +64,7 @@ export default class Stock {
                         ordenedStocks: ordenedStocks,
                         quote: currentQuote,
                         date: formatDate(quote.date, 'yyyy-mm-dd', true),
-                    }
+                    };
                 });
 
                 const dividends = stockData.events.dividends.map((dividend: any) => ({
