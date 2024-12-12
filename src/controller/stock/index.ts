@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import yahooFinance from 'yahoo-finance2';
-import { formatDate } from '../../util';
+import { formatDate, unifyStocksData } from '../../util';
 
 interface GetStockValuesListQuery {
     symbol: string,
@@ -28,22 +28,64 @@ export default class Stock {
     }
 
     getMultiplyStocks = async (req: Request, res: Response) => {
-        const { symbol, start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
-        const monthyContributionNumbered = Number(monthyContribution);
+        const { start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
+        let monthyContributionNumbered = Number(monthyContribution);
 
-        try {
-            const stockData: any = await yahooFinance.chart(symbol + '.SA', {
-                period1: new Date(start).getTime() / 1000,
-                period2: new Date(end).getTime() / 1000,
-                interval: '1mo',
-            });
+        const symbols = ['BBAS3', 'TAEE11', 'PETR4', 'VALE3'];
+        const firstDate = new Date(start);
+        const finalDate = new Date(end);
 
-            return res.json(stockData.quotes);
-        } catch (error) {
-            res.status(500).json({
-                error: 'error fetching request', message: error,
+        const response = await Promise.all(
+            symbols.map(async (symbol: any) => {
+                const stockData: any = await yahooFinance.chart(symbol + '.SA', {
+                    period1: firstDate.getTime() / 1000,
+                    period2: finalDate.getTime() / 1000,
+                    interval: '1mo',
+                });
+
+                let cumulativeContributionForSymbol: number = 0;
+                let cumulativePosition: number = 0;
+
+                const quotes = stockData.quotes.map((quote: any) => {
+                    const currentQuote = (quote.open + quote.close) / 2;
+                    const ordenedStocks = monthyContributionNumbered / (symbols.length * currentQuote);
+
+                    cumulativeContributionForSymbol += monthyContributionNumbered;
+                    cumulativePosition = cumulativePosition + ordenedStocks;
+    
+                    return {
+                        patrimony: cumulativePosition * currentQuote,
+                        monthyContribution: monthyContributionNumbered,
+                        cumulativeContribution: cumulativeContributionForSymbol,
+                        cumulativePosition: cumulativePosition,
+                        ordenedStocks: ordenedStocks,
+                        quote: currentQuote,
+                        date: formatDate(quote.date, 'yyyy-mm-dd', true),
+                    }
+                });
+
+                const dividends = stockData.events.dividends.map((dividend: any) => ({
+                    amount: dividend.amount,
+                    date: formatDate(dividend.date, 'yyyy-mm-dd')
+                }));
+        
+                return {
+                    stock: symbol,
+                    quotes: quotes,
+                    dividends: dividends,
+                };
+            })
+        );
+
+        const dividends = response
+            .map((stock: any) => stock.dividends)
+            .flat()
+            .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            
+            return res.json({
+                quotes: unifyStocksData(response),
+                dividends: dividends,
             });
-        }
     }
 
     getStockValuesList = async (req: Request, res: Response) => {
@@ -59,7 +101,7 @@ export default class Stock {
 
             const dividends = stockData.events.dividends.map((dividend: any) => ({
                 amount: dividend.amount,
-                date: formatDate(dividend.date),
+                date: formatDate(dividend.date, 'dd/mm/yyyy'),
             }));
             
             let carryOver = 0;
@@ -70,7 +112,7 @@ export default class Stock {
             let cumulativeContribution = 0;
 
             const quotes = stockData.quotes.map((quote: any) => {
-                let date = formatDate(quote.date);
+                let date: string = formatDate(quote.date, 'dd/mm/yyyy');
 
                 let dividendPayment = dividends.reduce((sum: any, dividend: any) => {
                     const [dividendDay, dividendMonth, dividendYear] = dividend.date.split('/').map(Number);
