@@ -4,6 +4,7 @@ const unifyStocksData = (data: any) => {
 
     data.forEach((stockData: any) => {
         const stockName = stockData.stock;
+
         stockData.quotes.forEach((quote: any) => {
             const { 
                 date, 
@@ -20,7 +21,8 @@ const unifyStocksData = (data: any) => {
                     date: date, 
                     monthyContribution: monthyContribution, 
                     cumulativeContribution: cumulativeContribution,
-                    stocks: [], 
+                    totalPatrimony: 0,
+                    stocks: [],
                 };
             }
 
