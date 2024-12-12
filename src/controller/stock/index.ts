@@ -45,13 +45,16 @@ export default class Stock {
 
                 let cumulativeContributionForSymbol: number = 0;
                 let cumulativePosition: number = 0;
+                let remainder: number = 0;
 
                 const quotes = stockData.quotes.map((quote: any) => {
                     const currentQuote = (quote.open + quote.close) / 2;
-                    const ordenedStocks = monthyContributionNumbered / (symbols.length * currentQuote);
+                    let adjustedContribution = (monthyContributionNumbered / symbols.length) + remainder;
+                    const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
 
-                    cumulativeContributionForSymbol += monthyContributionNumbered;
-                    cumulativePosition = cumulativePosition + ordenedStocks;
+                    remainder = adjustedContribution - ordenedStocks * currentQuote;
+                    cumulativeContributionForSymbol += adjustedContribution;
+                    cumulativePosition += ordenedStocks;
     
                     return {
                         patrimony: cumulativePosition * currentQuote,
@@ -61,7 +64,7 @@ export default class Stock {
                         ordenedStocks: ordenedStocks,
                         quote: currentQuote,
                         date: formatDate(quote.date, 'yyyy-mm-dd', true),
-                    }
+                    };
                 });
 
                 const dividends = stockData.events.dividends.map((dividend: any) => ({
