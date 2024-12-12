@@ -31,7 +31,7 @@ export default class Stock {
         const { start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
         let monthyContributionNumbered = Number(monthyContribution);
 
-        const symbols = ['BBAS3', 'TAEE11', 'PETR4', 'VALE3'];
+        const symbols = ['PETR4', 'TAEE11'];
         const firstDate = new Date(start);
         const finalDate = new Date(end);
 
@@ -53,7 +53,7 @@ export default class Stock {
                     const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
 
                     remainder = adjustedContribution - ordenedStocks * currentQuote;
-                    cumulativeContributionForSymbol += adjustedContribution;
+                    cumulativeContributionForSymbol += monthyContributionNumbered;
                     cumulativePosition += ordenedStocks;
     
                     return {
