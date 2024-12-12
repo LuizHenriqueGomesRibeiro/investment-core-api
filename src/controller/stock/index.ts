@@ -30,36 +30,35 @@ export default class Stock {
     getMultiplyStocks = async (req: Request, res: Response) => {
         const { start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
         let monthyContributionNumbered = Number(monthyContribution);
-        let cumulativeContribution: number = 0;
 
-        const symbols = ['PETR4', 'BBAS3'];
+        const symbols = ['BBAS3', 'TAEE11', 'PETR4', 'VALE3'];
+        const firstDate = new Date(start);
+        const finalDate = new Date(end);
 
         const response = await Promise.all(
             symbols.map(async (symbol: any) => {
                 const stockData: any = await yahooFinance.chart(symbol + '.SA', {
-                    period1: new Date(start).getTime() / 1000,
-                    period2: new Date(end).getTime() / 1000,
+                    period1: firstDate.getTime() / 1000,
+                    period2: finalDate.getTime() / 1000,
                     interval: '1mo',
                 });
 
-                let currentYear = new Date(start).getFullYear();
+                let cumulativeContributionForSymbol: number = 0;
+                let cumulativePosition: number = 0;
 
                 const quotes = stockData.quotes.map((quote: any) => {
-                    const quoteDate = new Date(quote.date);
-                    const quoteYear = quoteDate.getFullYear();
                     const currentQuote = (quote.open + quote.close) / 2;
+                    const ordenedStocks = monthyContributionNumbered / (symbols.length * currentQuote);
 
-                    if (quoteYear > currentYear) {
-                        monthyContributionNumbered = monthyContributionNumbered * 1.10;
-                        currentYear = quoteYear;
-                    }
-                    
-                    cumulativeContribution = cumulativeContribution + monthyContributionNumbered;
+                    cumulativeContributionForSymbol += monthyContributionNumbered;
+                    cumulativePosition = cumulativePosition + ordenedStocks;
     
                     return {
+                        patrimony: cumulativePosition * currentQuote,
                         monthyContribution: monthyContributionNumbered,
-                        cumulativeContribution: cumulativeContribution,
-                        ordenedStocks: monthyContributionNumbered / (2 * currentQuote),
+                        cumulativeContribution: cumulativeContributionForSymbol,
+                        cumulativePosition: cumulativePosition,
+                        ordenedStocks: ordenedStocks,
                         quote: currentQuote,
                         date: formatDate(quote.date, 'yyyy-mm-dd', true),
                     }
@@ -83,10 +82,10 @@ export default class Stock {
             .flat()
             .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
             
-        return res.json({
-            quotes: unifyStocksData(response),
-            dividends: dividends,
-        });
+            return res.json({
+                quotes: unifyStocksData(response),
+                dividends: dividends,
+            });
     }
 
     getStockValuesList = async (req: Request, res: Response) => {
