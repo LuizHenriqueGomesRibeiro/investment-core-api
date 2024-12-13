@@ -102,11 +102,31 @@ export default class Stock {
             .map((stock: any) => stock.dividends)
             .flat()
             .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            
-            return res.json({
-                quotes: unifyStocksData(response),
-                dividends: dividends,
+    
+        const transformedResponse = unifyStocksData(response);
+
+        const calculatePaymentByYear = (data: any) => {
+            const paymentsByYear: any = {};
+        
+            data.forEach((entry: any) => {
+                const year = new Date(entry.date).getFullYear();
+                if (!paymentsByYear[year]) {
+                    paymentsByYear[year] = 0;
+                }
+                paymentsByYear[year] += entry.cumulativePayment;
             });
+        
+            return Object.entries(paymentsByYear).map(([year, payment]: any) => ({
+                year: parseInt(year, 10),
+                payment: parseFloat(payment.toFixed(2)),
+            }));
+        }
+
+        return res.json({
+            quotes: transformedResponse,
+            dividends: dividends,
+            payments: calculatePaymentByYear(response),
+        });
     }
 
     getStockValuesList = async (req: Request, res: Response) => {
