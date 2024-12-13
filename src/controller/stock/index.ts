@@ -45,6 +45,7 @@ export default class Stock {
 
                 let cumulativeContributionForSymbol: number = 0;
                 let cumulativePosition: number = 0;
+                let cumulativePayment: number = 0;
                 let remainder: number = 0;
 
                 const dividends = stockData.events.dividends.map((dividend: any) => ({
@@ -74,12 +75,15 @@ export default class Stock {
                     
                     const payment = matchingDividend ? matchingDividend.amount * cumulativePosition : 0;
 
+                    cumulativePayment += payment;
+
                     return {
                         patrimony: cumulativePosition * currentQuote,
                         monthyContribution: monthyContributionNumbered,
                         cumulativeContribution: cumulativeContributionForSymbol,
                         cumulativePosition: cumulativePosition,
                         ordenedStocks: ordenedStocks,
+                        cumulativePayment: cumulativePayment,
                         quote: currentQuote,
                         date: date,
                         payment: payment,

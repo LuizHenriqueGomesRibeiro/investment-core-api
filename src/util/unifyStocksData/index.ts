@@ -11,6 +11,7 @@ const unifyStocksData = (data: any) => {
                 monthyContribution, 
                 cumulativeContribution,
                 cumulativePosition,
+                cumulativePayment,
                 quote: stockQuote, 
                 ordenedStocks, 
                 patrimony,
@@ -32,6 +33,7 @@ const unifyStocksData = (data: any) => {
                 quote: stockQuote,
                 ordenedStocks,
                 cumulativePosition,
+                cumulativePayment,
                 patrimony,
                 payment,
             });
