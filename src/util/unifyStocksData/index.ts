@@ -24,6 +24,9 @@ const unifyStocksData = (data: any) => {
                     monthyContribution: monthyContribution, 
                     cumulativeContribution: cumulativeContribution,
                     patrimony: 0,
+                    cumulativePayment: 0,
+                    payment: 0,
+
                     stocks: [],
                 };
             }
@@ -39,6 +42,8 @@ const unifyStocksData = (data: any) => {
             });
     
             dateMap[date].patrimony += patrimony;
+            dateMap[date].payment += payment;
+            dateMap[date].cumulativePayment += cumulativePayment;
         });
     });
     
