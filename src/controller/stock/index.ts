@@ -65,7 +65,7 @@ export default class Stock {
 
                     const payment = matchingDividend ? matchingDividend.amount * cumulativePosition : 0;
                     let adjustedContribution = reinvestDividend === 'true' ? 
-                        ((monthyContributionNumbered + payment / symbolsArray.length) + remainder) : 
+                        (((monthyContributionNumbered + payment) / symbolsArray.length) + remainder) : 
                         ((monthyContributionNumbered / symbolsArray.length) + remainder);
                     const currentQuote = (quote.open + quote.close) / 2;
                     const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
