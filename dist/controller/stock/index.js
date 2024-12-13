@@ -20,6 +20,70 @@ class Stock {
                 res.status(500).json({ error: 'Erro ao buscar dados da ação.' });
             }
         };
+        this.getMultiplyStocks = async (req, res) => {
+            const { start, end, reinvestDividend, monthyContribution, symbols } = req.query;
+            let monthyContributionNumbered = Number(monthyContribution);
+            const firstDate = new Date(start);
+            const finalDate = new Date(end);
+            const response = await Promise.all(symbols.map(async (symbol) => {
+                const stockData = await yahoo_finance2_1.default.chart(symbol + '.SA', {
+                    period1: firstDate.getTime() / 1000,
+                    period2: finalDate.getTime() / 1000,
+                    interval: '1mo',
+                });
+                let cumulativeContributionForSymbol = 0;
+                let cumulativePosition = 0;
+                let cumulativePayment = 0;
+                let remainder = 0;
+                const dividends = stockData.events.dividends.map((dividend) => ({
+                    amount: dividend.amount,
+                    date: (0, util_1.formatDate)(dividend.date, 'yyyy-mm-dd')
+                }));
+                const quotes = stockData.quotes.map((quote) => {
+                    const matchingDividend = dividends.find((dividend) => {
+                        const dividendDate = new Date(dividend.date);
+                        const quoteDate = new Date(quote.date);
+                        return (dividendDate.getFullYear() === quoteDate.getFullYear() &&
+                            dividendDate.getMonth() === quoteDate.getMonth());
+                    });
+                    const payment = matchingDividend ? matchingDividend.amount * cumulativePosition : 0;
+                    let adjustedContribution = reinvestDividend === 'true' ?
+                        ((monthyContributionNumbered + payment / symbols.length) + remainder) :
+                        ((monthyContributionNumbered / symbols.length) + remainder);
+                    const currentQuote = (quote.open + quote.close) / 2;
+                    const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
+                    const date = (0, util_1.formatDate)(quote.date, 'yyyy-mm-dd', true);
+                    remainder = adjustedContribution - ordenedStocks * currentQuote;
+                    cumulativeContributionForSymbol += monthyContributionNumbered;
+                    cumulativePosition += ordenedStocks;
+                    cumulativePayment += payment;
+                    return {
+                        patrimony: cumulativePosition * currentQuote,
+                        monthyContribution: monthyContributionNumbered,
+                        cumulativeContribution: cumulativeContributionForSymbol,
+                        cumulativePosition: cumulativePosition,
+                        ordenedStocks: ordenedStocks,
+                        cumulativePayment: cumulativePayment,
+                        quote: currentQuote,
+                        date: date,
+                        payment: payment,
+                    };
+                });
+                return {
+                    stock: symbol,
+                    quotes: quotes,
+                    dividends: dividends,
+                };
+            }));
+            const dividends = response
+                .map((stock) => stock.dividends)
+                .flat()
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            return res.json({
+                quotes: (0, util_1.unifyStocksData)(response),
+                dividends: dividends,
+            });
+        };
         this.getStockValuesList = async (req, res) => {
             const { symbol, start, end, reinvestDividend, monthyContribution } = req.query;
             const monthyContributionNumbered = Number(monthyContribution);
@@ -31,15 +95,16 @@ class Stock {
                 });
                 const dividends = stockData.events.dividends.map((dividend) => ({
                     amount: dividend.amount,
-                    date: (0, util_1.formatDate)(dividend.date),
+                    date: (0, util_1.formatDate)(dividend.date, 'dd/mm/yyyy'),
                 }));
                 let carryOver = 0;
                 let cumulativeStocksWithDividend = 0;
                 let cumulativeStocksWithoutDividend = 0;
                 let adjustedContribution = monthyContributionNumbered;
                 let cumulativePayment = 0;
+                let cumulativeContribution = 0;
                 const quotes = stockData.quotes.map((quote) => {
-                    let date = (0, util_1.formatDate)(quote.date);
+                    let date = (0, util_1.formatDate)(quote.date, 'dd/mm/yyyy');
                     let dividendPayment = dividends.reduce((sum, dividend) => {
                         const [dividendDay, dividendMonth, dividendYear] = dividend.date.split('/').map(Number);
                         const [day, month, year] = date.split('/').map(Number);
@@ -61,11 +126,13 @@ class Stock {
                     adjustedContribution = monthyContributionNumbered + dividendPayment * cumulativeStocksWithDividend;
                     const currentPayment = dividendPayment * (reinvestDividend ? cumulativeStocksWithDividend : cumulativeStocksWithoutDividend);
                     cumulativePayment += currentPayment;
-                    return reinvestDividend ? {
+                    cumulativeContribution += contributionWithoutDividend;
+                    return reinvestDividend === 'true' ? {
                         quote: averageQuote,
                         date: date,
                         property: cumulativeStocksWithDividend * averageQuote,
                         contribution: contributionWithDividend,
+                        comulativeContribution: cumulativeContribution,
                         ordenedStocks: integerPartWithDividend,
                         totalStocks: cumulativeStocksWithDividend,
                         payment: dividendPayment * cumulativeStocksWithDividend,
@@ -75,6 +142,7 @@ class Stock {
                         date: date,
                         property: cumulativeStocksWithoutDividend * averageQuote,
                         contribution: contributionWithoutDividend,
+                        comulativeContribution: cumulativeContribution,
                         ordenedStocks: integerPartWithoutDividend,
                         totalStocks: cumulativeStocksWithoutDividend,
                         payment: dividendPayment * cumulativeStocksWithoutDividend,
