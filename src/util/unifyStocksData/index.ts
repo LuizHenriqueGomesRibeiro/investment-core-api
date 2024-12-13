@@ -13,7 +13,8 @@ const unifyStocksData = (data: any) => {
                 cumulativePosition,
                 quote: stockQuote, 
                 ordenedStocks, 
-                patrimony
+                patrimony,
+                payment,
             } = quote;
     
             if (!dateMap[date]) {
@@ -31,7 +32,8 @@ const unifyStocksData = (data: any) => {
                 quote: stockQuote,
                 ordenedStocks,
                 cumulativePosition,
-                patrimony
+                patrimony,
+                payment,
             });
     
             dateMap[date].patrimony += patrimony;

@@ -47,15 +47,33 @@ export default class Stock {
                 let cumulativePosition: number = 0;
                 let remainder: number = 0;
 
+                const dividends = stockData.events.dividends.map((dividend: any) => ({
+                    amount: dividend.amount,
+                    date: formatDate(dividend.date, 'yyyy-mm-dd')
+                }));
+
                 const quotes = stockData.quotes.map((quote: any) => {
-                    const currentQuote = (quote.open + quote.close) / 2;
                     let adjustedContribution = (monthyContributionNumbered / symbols.length) + remainder;
+                    const currentQuote = (quote.open + quote.close) / 2;
                     const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
+                    const date = formatDate(quote.date, 'yyyy-mm-dd', true);
 
                     remainder = adjustedContribution - ordenedStocks * currentQuote;
                     cumulativeContributionForSymbol += monthyContributionNumbered;
                     cumulativePosition += ordenedStocks;
-    
+
+                    const matchingDividend = dividends.find((dividend: any) => {
+                        const dividendDate = new Date(dividend.date);
+                        const quoteDate = new Date(quote.date);
+                        
+                        return (
+                            dividendDate.getFullYear() === quoteDate.getFullYear() &&
+                            dividendDate.getMonth() === quoteDate.getMonth()
+                        );
+                    });
+                    
+                    const payment = matchingDividend ? matchingDividend.amount * cumulativePosition : 0;
+
                     return {
                         patrimony: cumulativePosition * currentQuote,
                         monthyContribution: monthyContributionNumbered,
@@ -63,15 +81,11 @@ export default class Stock {
                         cumulativePosition: cumulativePosition,
                         ordenedStocks: ordenedStocks,
                         quote: currentQuote,
-                        date: formatDate(quote.date, 'yyyy-mm-dd', true),
+                        date: date,
+                        payment: payment,
                     };
                 });
 
-                const dividends = stockData.events.dividends.map((dividend: any) => ({
-                    amount: dividend.amount,
-                    date: formatDate(dividend.date, 'yyyy-mm-dd')
-                }));
-        
                 return {
                     stock: symbol,
                     quotes: quotes,
