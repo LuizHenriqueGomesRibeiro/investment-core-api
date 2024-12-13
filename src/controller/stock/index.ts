@@ -3,7 +3,7 @@ import yahooFinance from 'yahoo-finance2';
 import { formatDate, unifyStocksData } from '../../util';
 
 interface GetStockValuesListQuery {
-    symbol: string,
+    symbols: string,
     start: string,
     end: string,
     reinvestDividend: string,
@@ -28,15 +28,14 @@ export default class Stock {
     }
 
     getMultiplyStocks = async (req: Request, res: Response) => {
-        const { start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
+        const { start, end, reinvestDividend, monthyContribution, symbols } = req.query as unknown as GetStockValuesListQuery;
         let monthyContributionNumbered = Number(monthyContribution);
-
-        const symbols = ['PETR4', 'TAEE11'];
+        const symbolsArray = symbols.split(',');
         const firstDate = new Date(start);
         const finalDate = new Date(end);
-
+        
         const response = await Promise.all(
-            symbols.map(async (symbol: any) => {
+            symbolsArray.map(async (symbol: string) => {
                 const stockData: any = await yahooFinance.chart(symbol + '.SA', {
                     period1: firstDate.getTime() / 1000,
                     period2: finalDate.getTime() / 1000,
@@ -54,15 +53,6 @@ export default class Stock {
                 }));
 
                 const quotes = stockData.quotes.map((quote: any) => {
-                    let adjustedContribution = (monthyContributionNumbered / symbols.length) + remainder;
-                    const currentQuote = (quote.open + quote.close) / 2;
-                    const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
-                    const date = formatDate(quote.date, 'yyyy-mm-dd', true);
-
-                    remainder = adjustedContribution - ordenedStocks * currentQuote;
-                    cumulativeContributionForSymbol += monthyContributionNumbered;
-                    cumulativePosition += ordenedStocks;
-
                     const matchingDividend = dividends.find((dividend: any) => {
                         const dividendDate = new Date(dividend.date);
                         const quoteDate = new Date(quote.date);
@@ -72,8 +62,18 @@ export default class Stock {
                             dividendDate.getMonth() === quoteDate.getMonth()
                         );
                     });
-                    
+
                     const payment = matchingDividend ? matchingDividend.amount * cumulativePosition : 0;
+                    let adjustedContribution = reinvestDividend === 'true' ? 
+                        ((monthyContributionNumbered + payment / symbolsArray.length) + remainder) : 
+                        ((monthyContributionNumbered / symbolsArray.length) + remainder);
+                    const currentQuote = (quote.open + quote.close) / 2;
+                    const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
+                    const date = formatDate(quote.date, 'yyyy-mm-dd', true);
+
+                    remainder = adjustedContribution - ordenedStocks * currentQuote;
+                    cumulativeContributionForSymbol += monthyContributionNumbered;
+                    cumulativePosition += ordenedStocks;
 
                     cumulativePayment += payment;
 
@@ -110,7 +110,7 @@ export default class Stock {
     }
 
     getStockValuesList = async (req: Request, res: Response) => {
-        const { symbol, start, end, reinvestDividend, monthyContribution } = req.query as unknown as GetStockValuesListQuery;
+        const { symbol, start, end, reinvestDividend, monthyContribution } = req.query as unknown as any;
         const monthyContributionNumbered = Number(monthyContribution);
 
         try {
