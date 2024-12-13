@@ -107,15 +107,17 @@ export default class Stock {
 
         const calculatePaymentByYear = (data: any) => {
             const paymentsByYear: any = {};
-        
+
             data.forEach((entry: any) => {
                 const year = new Date(entry.date).getFullYear();
+
                 if (!paymentsByYear[year]) {
                     paymentsByYear[year] = 0;
                 }
-                paymentsByYear[year] += entry.cumulativePayment;
+
+                paymentsByYear[year] += entry.payment;
             });
-        
+
             return Object.entries(paymentsByYear).map(([year, payment]: any) => ({
                 year: parseInt(year, 10),
                 payment: parseFloat(payment.toFixed(2)),
@@ -124,8 +126,7 @@ export default class Stock {
 
         return res.json({
             quotes: transformedResponse,
-            dividends: dividends,
-            payments: calculatePaymentByYear(response),
+            payments: calculatePaymentByYear(transformedResponse),
         });
     }
 
