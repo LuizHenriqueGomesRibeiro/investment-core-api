@@ -8,6 +8,7 @@ interface GetStockValuesListQuery {
     end: string,
     reinvestDividend: string,
     monthyContribution: number,
+    monthyContributionIncrementByYear: number,
 }
 
 export default class Stock {
@@ -28,7 +29,15 @@ export default class Stock {
     }
 
     getMultiplyStocks = async (req: Request, res: Response) => {
-        const { start, end, reinvestDividend, monthyContribution, symbols } = req.query as unknown as GetStockValuesListQuery;
+        const { 
+            start, 
+            end, 
+            reinvestDividend, 
+            monthyContribution, 
+            symbols,
+            monthyContributionIncrementByYear
+        } = req.query as unknown as GetStockValuesListQuery;
+
         let monthyContributionNumbered = Number(monthyContribution);
         const symbolsArray = symbols.split(',');
         const firstDate = new Date(start);
@@ -64,10 +73,9 @@ export default class Stock {
                     });
 
                     const quoteDate = new Date(quote.date);
-
                     const yearsSinceStart = quoteDate.getFullYear() - firstDate.getFullYear();
 
-                    monthyContributionNumbered = monthyContribution * Math.pow(1.1, yearsSinceStart);
+                    monthyContributionNumbered = monthyContribution * Math.pow(1 + (monthyContributionIncrementByYear / 100), yearsSinceStart);
 
                     const payment = matchingDividend ? matchingDividend.amount * cumulativePosition : 0;
                     let adjustedContribution = reinvestDividend === 'true' ? 
