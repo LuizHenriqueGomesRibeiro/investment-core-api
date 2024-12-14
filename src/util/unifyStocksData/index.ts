@@ -38,6 +38,7 @@ const unifyStocksData = (data: any) => {
                 cumulativePayment,
                 patrimony,
                 payment,
+                date
             });
     
             dateMap[date].patrimony += patrimony;
