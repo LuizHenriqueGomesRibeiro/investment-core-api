@@ -26,7 +26,6 @@ const unifyStocksData = (data: any) => {
                     patrimony: 0,
                     cumulativePayment: 0,
                     payment: 0,
-
                     stocks: [],
                 };
             }
