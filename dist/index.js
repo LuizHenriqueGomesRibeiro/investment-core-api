@@ -10,7 +10,6 @@ const app = (0, express_1.default)();
 const stock = new index_1.Stock();
 app.use((0, cors_1.default)());
 app.get('/stocks/list/', stock.getMultiplyStocks);
-app.get('/stock/list/', stock.getStockValuesList);
 app.listen(3001, () => {
     console.log('Servidor rodando na porta 3001');
 });

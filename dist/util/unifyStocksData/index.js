@@ -13,6 +13,8 @@ const unifyStocksData = (data) => {
                     monthyContribution: monthyContribution,
                     cumulativeContribution: cumulativeContribution,
                     patrimony: 0,
+                    cumulativePayment: 0,
+                    payment: 0,
                     stocks: [],
                 };
             }
@@ -26,6 +28,8 @@ const unifyStocksData = (data) => {
                 payment,
             });
             dateMap[date].patrimony += patrimony;
+            dateMap[date].payment += payment;
+            dateMap[date].cumulativePayment += cumulativePayment;
         });
     });
     Object.values(dateMap)
