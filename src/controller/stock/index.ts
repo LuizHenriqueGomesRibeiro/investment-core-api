@@ -63,6 +63,12 @@ export default class Stock {
                         );
                     });
 
+                    const quoteDate = new Date(quote.date);
+
+                    const yearsSinceStart = quoteDate.getFullYear() - firstDate.getFullYear();
+
+                    monthyContributionNumbered = monthyContribution * Math.pow(1.1, yearsSinceStart);
+
                     const payment = matchingDividend ? matchingDividend.amount * cumulativePosition : 0;
                     let adjustedContribution = reinvestDividend === 'true' ? 
                         (((monthyContributionNumbered + payment) / symbolsArray.length) + remainder) : 
@@ -74,7 +80,6 @@ export default class Stock {
                     remainder = adjustedContribution - ordenedStocks * currentQuote;
                     cumulativeContributionForSymbol += monthyContributionNumbered;
                     cumulativePosition += ordenedStocks;
-
                     cumulativePayment += payment;
 
                     return {
