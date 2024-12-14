@@ -9,6 +9,7 @@ interface GetStockValuesListQuery {
     reinvestDividend: string,
     monthyContribution: number,
     monthyContributionIncrementByYear: number,
+    dateToStopReinvestment: string,
 }
 
 export default class Stock {
@@ -35,13 +36,15 @@ export default class Stock {
             reinvestDividend, 
             monthyContribution, 
             symbols,
-            monthyContributionIncrementByYear
+            monthyContributionIncrementByYear,
+            dateToStopReinvestment
         } = req.query as unknown as GetStockValuesListQuery;
 
         let monthyContributionNumbered = Number(monthyContribution);
         const symbolsArray = symbols.split(',');
         const firstDate = new Date(start);
         const finalDate = new Date(end);
+        const stopDate = new Date(dateToStopReinvestment);
         
         const response = await Promise.all(
             symbolsArray.map(async (symbol: string) => {
@@ -74,6 +77,7 @@ export default class Stock {
 
                     const quoteDate = new Date(quote.date);
                     const yearsSinceStart = quoteDate.getFullYear() - firstDate.getFullYear();
+                    const stopingReinvest = quoteDate > stopDate || quoteDate === stopDate;
 
                     monthyContributionNumbered = monthyContribution * Math.pow(1 + (monthyContributionIncrementByYear / 100), yearsSinceStart);
 
@@ -100,6 +104,7 @@ export default class Stock {
                         quote: currentQuote,
                         date: date,
                         payment: payment,
+                        stopingReinvest: stopingReinvest
                     };
                 });
 

@@ -16,6 +16,7 @@ const unifyStocksData = (data: any) => {
                 ordenedStocks, 
                 patrimony,
                 payment,
+                stopingReinvest
             } = quote;
     
             if (!dateMap[date]) {
@@ -26,7 +27,7 @@ const unifyStocksData = (data: any) => {
                     patrimony: 0,
                     cumulativePayment: 0,
                     payment: 0,
-
+                    stopingReinvest,
                     stocks: [],
                 };
             }
