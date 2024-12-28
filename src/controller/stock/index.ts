@@ -144,7 +144,6 @@ export default class Stock {
                 return Object.entries(paymentsByYear).map(([year, payment]: any) => ({
                     year: parseInt(year, 10),
                     payment: parseFloat(payment.toFixed(2)),
-                    byMonth: parseFloat(payment.toFixed(2)) / 12,
                 }));
             }
     
