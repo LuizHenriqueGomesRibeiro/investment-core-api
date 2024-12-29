@@ -90,7 +90,7 @@ export default class Stock {
                             ) : (
                                 (monthyContributionNumbered / symbolsArray.length) + remainder
                             );
-                        const currentQuote = (quote.open + quote.close) / 2;
+                        const currentQuote = quote.close;
                         const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
                         const date = formatDate(quote.date, 'yyyy-mm-dd', true);
     
