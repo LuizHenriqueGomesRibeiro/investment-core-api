@@ -1,19 +1,6 @@
+import { GetPatrimonyReturnContributionQueryProps, GetPatrimonyReturnSymbolQueryProps } from './types';
 import { Request, Response } from 'express';
 import yahooFinance from 'yahoo-finance2';
-
-interface GetPatrimonyReturnContributionQueryProps {
-    patrimony: number,
-    start: string,
-    end: string,
-    symbol: string
-}
-
-interface GetPatrimonyReturnSymbolQueryProps {
-    patrimony: number,
-    start: string,
-    end: string,
-    contribution: number,
-}
 
 export default class Patrimony {
     getPatrimonyReturnContribution = async (req: Request, res: Response) => {
@@ -32,11 +19,10 @@ export default class Patrimony {
             return res.json(stockData.quotes.map((quote: any) => {
                 return { quote: quote.close, date: quote.date }
             }));
-
         } catch (error) {
             return res.json({
                 message: 'error'
-            })
+            });
         }
     }
 
@@ -46,8 +32,6 @@ export default class Patrimony {
 
             const firstDate = new Date(start as string);
             const finalDate = new Date(end as string);
-
-
 
         } catch (error) {
 
