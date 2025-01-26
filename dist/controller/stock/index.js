@@ -58,7 +58,7 @@ class Stock {
                             (stopingReinvest ?
                                 ((monthyContributionNumbered / symbolsArray.length) + remainder) :
                                 (((monthyContributionNumbered + payment) / symbolsArray.length) + remainder)) : ((monthyContributionNumbered / symbolsArray.length) + remainder);
-                        const currentQuote = (quote.open + quote.close) / 2;
+                        const currentQuote = quote.close;
                         const ordenedStocks = Math.floor(adjustedContribution / currentQuote);
                         const date = (0, util_1.formatDate)(quote.date, 'yyyy-mm-dd', true);
                         remainder = adjustedContribution - ordenedStocks * currentQuote;
@@ -101,7 +101,6 @@ class Stock {
                     return Object.entries(paymentsByYear).map(([year, payment]) => ({
                         year: parseInt(year, 10),
                         payment: parseFloat(payment.toFixed(2)),
-                        byMonth: parseFloat(payment.toFixed(2)) / 12,
                     }));
                 };
                 return res.json({

@@ -8,8 +8,11 @@ const cors_1 = __importDefault(require("cors"));
 const index_1 = require("./controller/index");
 const app = (0, express_1.default)();
 const stock = new index_1.Stock();
+const patrimony = new index_1.Patrimony();
 app.use((0, cors_1.default)());
 app.get('/stocks/list/', stock.getMultiplyStocks);
+app.get('/patrimony/contribution/', patrimony.getPatrimonyReturnContribution);
+app.get('/patrimony/symbol/', patrimony.getPatrimonyReturnSymbol);
 app.listen(3001, () => {
     console.log('Servidor rodando na porta 3001');
 });
