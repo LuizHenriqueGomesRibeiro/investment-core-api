@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
 import yahooFinance from 'yahoo-finance2';
 import { formatDate, unifyStocksData } from '../../util';
-
+import axios from "axios";
 interface GetStockValuesListQuery {
+    monthyContributionIncrementByYear: number,
+    dateToStopReinvestment?: string,
+    monthyContribution: number,
+    reinvestDividend: string,
     symbols: string,
     start: string,
     end: string,
-    reinvestDividend: string,
-    monthyContribution: number,
-    monthyContributionIncrementByYear: number,
-    dateToStopReinvestment?: string,
 }
 
 export default class Stock {
@@ -20,8 +20,8 @@ export default class Stock {
             const stockData: any = await yahooFinance.quote(symbol + '.SA');
 
             return res.json({ 
-                stock: stockData, 
-                averageAnalystRating: Number(stockData.averageAnalystRating.split(' - ')[0]),
+                longName: stockData.longName,
+                stockData: stockData,
             });
             
         } catch (error) {
@@ -54,7 +54,10 @@ export default class Stock {
                         period2: finalDate.getTime() / 1000,
                         interval: '1mo',
                     });
-    
+
+                    const results = await axios.get(`https://brapi.dev/api/quote/${symbol}?token=qHmqTFRX2KjFHhAgyUUUBC`);
+                    const url = results.data.results[0].logourl;
+
                     let cumulativeContributionForSymbol: number = 0;
                     let cumulativePosition: number = 0;
                     let cumulativePayment: number = 0;
@@ -98,7 +101,7 @@ export default class Stock {
                         cumulativeContributionForSymbol += monthyContributionNumbered;
                         cumulativePosition += ordenedStocks;
                         cumulativePayment += payment;
-    
+
                         return {
                             patrimony: cumulativePosition * currentQuote,
                             monthyContribution: monthyContributionNumbered,
@@ -109,23 +112,22 @@ export default class Stock {
                             quote: currentQuote,
                             date: date,
                             payment: payment,
-                            stopingReinvest: stopingReinvest
+                            stopingReinvest: stopingReinvest,
+                            longName: stockData.meta.longName,
+                            url
                         };
                     });
     
                     return {
-                        stock: symbol,
-                        quotes: quotes,
+                        longName: stockData.meta.longName,
                         dividends: dividends,
+                        quotes: quotes,
+                        stock: symbol,
+                        url,
                     };
                 })
             );
-    
-            const dividends = response
-                .map((stock: any) => stock.dividends)
-                .flat()
-                .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
+
             const transformedResponse = unifyStocksData(response);
     
             const calculatePaymentByYear = (data: any) => {

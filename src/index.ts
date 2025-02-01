@@ -14,6 +14,7 @@ app.get('/stocks/list/', stock.getMultiplyStocks);
 app.get('/patrimony/contribution/', patrimony.getPatrimonyReturnContribution);
 app.get('/patrimony/symbol/', patrimony.getPatrimonyReturnSymbol);
 app.get('/stocks/', stocks.searchStocks);
+app.get('/stock/', stock.getStock);
 
 app.listen(3001, () => {
     console.log('Servidor rodando na porta 3001');
