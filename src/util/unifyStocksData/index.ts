@@ -9,8 +9,9 @@ const unifyStocksData = (data: any) => {
         stockData.quotes.forEach((quote: any) => {
             const { 
                 date, 
-                monthyContribution, 
+                cumulativeContributionWithoutDividends,
                 cumulativeContribution,
+                monthyContribution, 
                 cumulativePosition,
                 cumulativePayment,
                 quote: stockQuote, 
@@ -24,6 +25,7 @@ const unifyStocksData = (data: any) => {
                 dateMap[date] = { 
                     date: date, 
                     monthyContribution: monthyContribution, 
+                    cumulativeContributionWithoutDividends: cumulativeContributionWithoutDividends,
                     cumulativeContribution: cumulativeContribution,
                     cumulativePosition,
                     patrimony: 0,
@@ -38,9 +40,10 @@ const unifyStocksData = (data: any) => {
                 name: stockName,
                 longName: stockLongName,
                 quote: stockQuote,
-                ordenedStocks,
+                cumulativeContributionWithoutDividends,
                 cumulativePosition,
                 cumulativePayment,
+                ordenedStocks,
                 patrimony,
                 payment,
                 date,

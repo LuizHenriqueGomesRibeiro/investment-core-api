@@ -58,6 +58,7 @@ export default class Stock {
                     const results = await axios.get(`https://brapi.dev/api/quote/${symbol}?token=qHmqTFRX2KjFHhAgyUUUBC`);
                     const url = results.data.results[0].logourl;
 
+                    let cumulativeContributionWithoutDividends: number = 0;
                     let cumulativeContributionForSymbol: number = 0;
                     let cumulativePosition: number = 0;
                     let cumulativePayment: number = 0;
@@ -99,12 +100,14 @@ export default class Stock {
     
                         remainder = adjustedContribution - ordenedStocks * currentQuote;
                         cumulativeContributionForSymbol += monthyContributionNumbered;
+                        cumulativeContributionWithoutDividends += monthyContributionNumbered / symbolsArray.length;
                         cumulativePosition += ordenedStocks;
                         cumulativePayment += payment;
-
+                        
                         return {
                             patrimony: cumulativePosition * currentQuote,
                             monthyContribution: monthyContributionNumbered,
+                            cumulativeContributionWithoutDividends: cumulativeContributionWithoutDividends,
                             cumulativeContribution: cumulativeContributionForSymbol,
                             cumulativePosition: cumulativePosition,
                             ordenedStocks: ordenedStocks,
